@@ -42,7 +42,7 @@ class Login {
                 $conectDB = NULL;
             }
         }else{
-            $_SESSION["DuplicateUser"] = 'este usuario ya esta registrado';
+            $_SESSION["DuplicateUser"] = 'this user is already registered';
             $_SESSION["vandera"] = 8;
             header('location: create_account.php');
         }
