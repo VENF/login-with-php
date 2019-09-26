@@ -38,6 +38,10 @@
 								echo $_SESSION["operationSuccesfully"];
 								session_destroy();
 							break;
+							case 8:
+								echo $_SESSION["DuplicateUser"];
+								session_destroy();
+							break;
 						}
 					?>
                     <div class="form-group">

@@ -13,28 +13,37 @@ class Login {
         return $cnx;
     }
     public function add($name, $lastname,$email,$password,$conectDB){
-        $nameV = $this-> validationStr($name);
-        $lastnameV = $this-> validationStr($lastname);
-        $passwordV = $this-> validatePassword($password);
-
-        if($nameV === false || $lastnameV === false){
-            $_SESSION["messageNamesError"] = 'Oops, you have an error in your name or surname verify that everything is fine';
-            $_SESSION["vandera"] = 2;
-            header('location: create_account.php');
+        $user = $this->validateUser($email, $conectDB);
+        if($user === false){
+            $nameV = $this-> validationStr($name);
+            $lastnameV = $this-> validationStr($lastname);
+            $passwordV = $this-> validatePassword($password);
+    
+            if($nameV === false || $lastnameV === false){
+                $_SESSION["messageNamesError"] = 'Oops, you have an error in your name or surname verify that everything is fine';
+                $_SESSION["vandera"] = 2;
+                header('location: create_account.php');
+            }else{
+                $datos = [$name, $lastname, $email];
+            }
+            if($passwordV === false){
+                $_SESSION["messagePasswordError"] = 'Your password is invalid, it must contain at least 8 characters and at least one numeric character';
+                $_SESSION["vandera"] = 3;
+                header('location: create_account.php');
+            }else{
+                $passwordHas = password_hash($password, PASSWORD_DEFAULT);
+                $datos[] = $passwordHas;
+                $sent = $conectDB->prepare("INSERT INTO login (name, lastname, email,password) VALUES(?,?,?,?)");
+                $sent->execute($datos);
+                $_SESSION["vandera"] = 4;
+                $_SESSION["operationSuccesfully"] = 'Your user is successfully registered!';
+                header('location: create_account.php');
+                $sent = NULL;
+                $conectDB = NULL;
+            }
         }else{
-            $datos = [$name, $lastname, $email];
-        }
-        if($passwordV === false){
-            $_SESSION["messagePasswordError"] = 'Your password is invalid, it must contain at least 8 characters and at least one numeric character';
-            $_SESSION["vandera"] = 3;
-            header('location: create_account.php');
-        }else{
-            $passwordHas = password_hash($password, PASSWORD_DEFAULT);
-            $datos[] = $passwordHas;
-            $sent = $conectDB->prepare("INSERT INTO login (name, lastname, email,password) VALUES(?,?,?,?)");
-            $sent->execute($datos);
-            $_SESSION["vandera"] = 4;
-            $_SESSION["operationSuccesfully"] = 'Your user is successfully registered!';
+            $_SESSION["DuplicateUser"] = 'este usuario ya esta registrado';
+            $_SESSION["vandera"] = 8;
             header('location: create_account.php');
         }
     }
@@ -74,6 +83,16 @@ class Login {
                 header('location: home.php');
             }
         }
+        $sent = NULL;
+        $conectDB = NULL;
+    }
+    public function validateUser($email, $conectDB){
+        $sent = $conectDB->prepare("SELECT * FROM login WHERE email = ?");
+        $sent->execute(array($email));
+        $result = $sent->fetch();
+        $sent = NULL;
+        $conectDB = NULL;
+        return $result;
     }
 }
 //connect
